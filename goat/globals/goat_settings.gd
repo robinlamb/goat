@@ -10,12 +10,12 @@ signal value_changed (section, key)
 const SETTINGS_FILE_NAME := "user://settings.cfg"
 # Each entry contains: section name, key name, default value
 const DEFAULT_VALUES := [
-	["graphics", "fullscreen", true],
-	["graphics", "glow", true],
-	["graphics", "reflections", true],
-	["graphics", "shadows", true],
-	["sound", "music_volume", 0.0],
-	["sound", "effects_volume", 0.0],
+	["graphics", "fullscreen_enabled", true],
+	["graphics", "glow_enabled", true],
+	["graphics", "reflections_enabled", true],
+	["graphics", "shadows_enabled", true],
+	["sound", "music_volume", 1.0],
+	["sound", "effects_volume", 1.0],
 	["controls", "mouse_sensitivity", 0.3],
 ]
 
@@ -43,10 +43,10 @@ func _ready():
 	
 	# Connect settings to global handlers
 	var settings_signals_handlers = {
-		"value_changed_graphics_shadows": "_on_shadows_settings_changed",
-		"value_changed_graphics_reflections": "_on_camera_settings_changed",
-		"value_changed_graphics_glow": "_on_camera_settings_changed",
-		"value_changed_graphics_fullscreen": "_on_fullscreen_settings_changed",
+		"value_changed_graphics_shadows_enabled": "_on_shadows_settings_changed",
+		"value_changed_graphics_reflections_enabled": "_on_camera_settings_changed",
+		"value_changed_graphics_glow_enabled": "_on_camera_settings_changed",
+		"value_changed_graphics_fullscreen_enabled": "_on_fullscreen_settings_changed",
 		"value_changed_sound_music_volume": "_on_music_settings_changed",
 		"value_changed_sound_effects_volume": "_on_effects_settings_changed",
 	}
@@ -80,19 +80,17 @@ func set_value(section: String, key: String, value):
 
 
 func _on_fullscreen_settings_changed():
-	OS.window_fullscreen = get_value("graphics", "fullscreen")
+	OS.window_fullscreen = get_value("graphics", "fullscreen_enabled")
 
 
 func _on_music_settings_changed():
 	var volume = get_value("sound", "music_volume")
-	var bus_id = AudioServer.get_bus_index("Music")
-	AudioServer.set_bus_volume_db(bus_id, volume)
+	_set_volume_db("Music", volume)
 
 
 func _on_effects_settings_changed():
 	var volume = get_value("sound", "effects_volume")
-	var bus_id = AudioServer.get_bus_index("Effects")
-	AudioServer.set_bus_volume_db(bus_id, volume)
+	_set_volume_db("Effects", volume)
 
 
 func _on_shadows_settings_changed():
@@ -113,14 +111,29 @@ func _on_node_added(node: Node):
 
 
 func _update_single_lamp_settings(lamp: Light):
-	var shadows_enabled = get_value("graphics", "shadows")
+	var shadows_enabled = get_value("graphics", "shadows_enabled")
 	lamp.shadow_enabled = shadows_enabled
 	# Specular light creates reflections, without shadows they look wrong
 	lamp.light_specular = 0.5 if shadows_enabled else 0.0
 
 
 func _update_single_camera_settings(camera: Camera):
-	var reflections_enabled = get_value("graphics", "reflections")
-	var glow_enabled = get_value("graphics", "glow")
+	var reflections_enabled = get_value("graphics", "reflections_enabled")
+	var glow_enabled = get_value("graphics", "glow_enabled")
 	camera.environment.ss_reflections_enabled = reflections_enabled
 	camera.environment.glow_enabled = glow_enabled
+
+
+func _set_volume_db(bus_name: String, volume: float) -> void:
+	"""
+	Volume is a value between 0 (complete silence) and 1 (default bus volume).
+	It is recalculated to a non-linear value between -80 and 0 dB.
+	Using a linear value causes the sound to almost vanish long before the
+	volume slider reaches minimum.
+	"""
+	# Min volume dB
+	var M = -80.0
+	# Recalculate to <M, 0>, non-linear
+	var volume_db = abs(M) * sqrt(2 * volume - pow(volume, 2)) + M
+	var bus_id = AudioServer.get_bus_index(bus_name)
+	AudioServer.set_bus_volume_db(bus_id, volume_db)

@@ -1,3 +1,5 @@
+<img src="./docs/img/logo_goat.svg" alt="GOAT logo" width="128">
+
 # GOAT
 
 **Godot Open Adventure Template (GOAT)** is a tool for making 3D adventure
@@ -56,3 +58,9 @@ All sounds used in the project are in public domain and can be downloaded from
 * [battery_on_remote.ogg](https://freesound.org/people/_lourii/sounds/491905/)
 * [the_other_side.ogg](https://freesound.org/people/ricniclas/sounds/451949/)
 * [shutter.ogg](https://freesound.org/people/aldenroth2/sounds/272017/)
+
+### Fonts
+
+The `Tuffy.ttf` font was downloaded from
+[Public Domain Files](http://www.publicdomainfiles.com/show_file.php?id=13486218041168)
+and is in public domain.
